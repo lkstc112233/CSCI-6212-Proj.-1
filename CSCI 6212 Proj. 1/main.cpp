@@ -7,6 +7,18 @@
 //
 
 #include <iostream>
+#include <utility>
+
+int gcd(int n, int m)
+{
+    if (n < m)
+        std::swap(n,m);
+    int r = n % m;
+    if (r == 0)
+        return m;
+    return gcd(m, r);
+}
+
 
 int main(int argc, const char * argv[]) {
     // insert code here...
