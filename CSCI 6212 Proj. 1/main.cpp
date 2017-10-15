@@ -29,7 +29,7 @@ int hob (int num)
 
 // Run the Option 3 with size n, outputing the time elapsed in nanoseconds.
 int main(int argc, const char * argv[]) {
-    int n = 400;
+    int n = 2048;
     if (argc > 1)
         n = atoi(argv[1]);
     if (n == 0)
@@ -45,38 +45,42 @@ int main(int argc, const char * argv[]) {
             A.set(i, j, unif(re));
             B.set(i, j, unif(re));
         }
-    Matrix AN(A);
-    Matrix BN(B);
-    Matrix CN(n);
-    // benchmark: Naive method
-    auto begin = std::chrono::high_resolution_clock::now();
-    AN.Multiply1(BN, CN);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << "\t";
-    int RS = hob(n - 1);
-    RS <<= 1;
-    Matrix AS(RS);
-    Matrix BS(RS);
-    Matrix CS(RS);
-    for (int i = 0; i < RS; ++i)
-        for (int j = 0; j < RS; ++j)
-        {
-            if (i < n && j < n)
+    {
+        Matrix AN(A);
+        Matrix BN(B);
+        Matrix CN(n);
+        // benchmark: Naive method
+        auto begin = std::chrono::high_resolution_clock::now();
+        AN.Multiply1(BN, CN);
+        auto end = std::chrono::high_resolution_clock::now();
+        std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << "\t";
+    }
+    {
+        int RS = hob(n - 1);
+        RS <<= 1;
+        Matrix AS(RS);
+        Matrix BS(RS);
+        Matrix CS(RS);
+        for (int i = 0; i < RS; ++i)
+            for (int j = 0; j < RS; ++j)
             {
-                AS.set(i, j, A.get(i, j));
-                BS.set(i, j, B.get(i, j));
+                if (i < n && j < n)
+                {
+                    AS.set(i, j, A.get(i, j));
+                    BS.set(i, j, B.get(i, j));
+                }
+                else
+                {
+                    AS.set(i, j, 0);
+                    BS.set(i, j, 0);
+                }
             }
-            else
-            {
-                AS.set(i, j, 0);
-                BS.set(i, j, 0);
-            }
-        }
-    // benchmark: Strassen’s algorithm
-    begin = std::chrono::high_resolution_clock::now();
-    AS.Multiply2(BS, CS);
-    end = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << std::endl;
+        // benchmark: Strassen’s algorithm
+        auto begin = std::chrono::high_resolution_clock::now();
+        AS.Multiply2(BS, CS);
+        auto end = std::chrono::high_resolution_clock::now();
+        std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << std::endl;
+    }
     return 0;
 }
 

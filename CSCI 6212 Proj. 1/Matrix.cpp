@@ -26,7 +26,12 @@ public:
     Allocator<size>()
         :header(nullptr)
     {
-        addBlock();
+        addBlock(4);
+    }
+    ~Allocator<size>()
+    {
+        for (auto p : allocatedMemoryBlocks)
+            delete[] p;
     }
     void* get()
     {
@@ -36,7 +41,7 @@ public:
             header = header->pointer;
             return tmp;
         }
-        addBlock();
+        addBlock(std::max(1,8196 / size));
         return get();
     }
     void back(void *ptr)
