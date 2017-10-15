@@ -9,31 +9,126 @@
 #include "Matrix.hpp"
 #include <cstdlib>
 #include <algorithm>
+#include <vector>
+#include <cmath>
+
+class Allocator_base
+{
+public:
+    virtual void* get()=0;
+    virtual void back(void *ptr)=0;
+};
+
+template<int size>
+class Allocator : public Allocator_base
+{
+public:
+    Allocator<size>()
+        :header(nullptr)
+    {
+        addBlock();
+    }
+    void* get()
+    {
+        if (header != nullptr)
+        {
+            auto tmp = header;
+            header = header->pointer;
+            return tmp;
+        }
+        addBlock();
+        return get();
+    }
+    void back(void *ptr)
+    {
+        static_cast<m_U*>(ptr)->pointer = header;
+        header = static_cast<m_U*>(ptr);
+    }
+private:
+    union m_U
+    {
+        double data[size * size];
+        m_U* pointer;
+    };
+    m_U* header;
+    std::vector<m_U*> allocatedMemoryBlocks;
+    void addBlock(int toGet = 10)
+    {
+        auto ptr = new m_U[toGet];
+        ptr->pointer = header;
+        allocatedMemoryBlocks.push_back(ptr);
+        for (int i = 0; i < toGet - 1; ++i)
+        {
+            (ptr+1)->pointer = ptr;
+            ptr = ptr+1;
+        }
+        header = ptr;
+    }
+};
+
+class Allocators
+{
+public:
+    Allocators()
+    {
+        allocators[0] = new Allocator<1>;
+        allocators[1] = new Allocator<2>;
+        allocators[2] = new Allocator<4>;
+        allocators[3] = new Allocator<8>;
+        allocators[4] = new Allocator<16>;
+        allocators[5] = new Allocator<32>;
+        allocators[6] = new Allocator<64>;
+        allocators[7] = new Allocator<128>;
+        allocators[8] = new Allocator<256>;
+        allocators[9] = new Allocator<512>;
+        allocators[10] = new Allocator<1024>;
+        allocators[11] = new Allocator<2048>;
+        allocators[12] = new Allocator<4096>;
+    }
+    void* getMatrix(int size)
+    {
+        return getAllocator(size)->get();
+    }
+    void returnMatrix(int size, void* ptr)
+    {
+        getAllocator(size)->back(ptr);
+    }
+private:
+    Allocator_base* getAllocator(int size)
+    {
+        int index = log2(size) + 1;
+        if (!((1 << index) >= size)) throw -1;
+        return allocators[index];
+    }
+    Allocator_base *allocators[13];
+};
+
+static Allocators allocators;
 
 Matrix::Matrix(int s)
 : size(s)
 {
-    data = new double[size * size];
+    data = static_cast<double*>(allocators.getMatrix(size));
 }
 
 Matrix::Matrix(const Matrix& m)
 : size(m.size)
 {
-    data = new double[size * size];
+    data = static_cast<double*>(allocators.getMatrix(size));
     memcpy(data, m.data, size * size * sizeof(double));
 }
 
 Matrix& Matrix::operator=(const Matrix& m)
 {
     size = m.size;
-    data = new double[size * size];
+    data = static_cast<double*>(allocators.getMatrix(size));
     memcpy(data, m.data, size * size * sizeof(double));
     return *this;
 }
 
 Matrix::~Matrix()
 {
-    delete[] data;
+    allocators.returnMatrix(size, data);
 }
 
 // Naive way
