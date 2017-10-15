@@ -115,6 +115,7 @@ Matrix::Matrix(const Matrix& m)
 : size(m.size)
 {
     data = static_cast<double*>(allocators.getMatrix(size));
+//    std::copy(m.data, m.data + size * size, data);
     memcpy(data, m.data, size * size * sizeof(double));
 }
 
@@ -122,6 +123,7 @@ Matrix& Matrix::operator=(const Matrix& m)
 {
     size = m.size;
     data = static_cast<double*>(allocators.getMatrix(size));
+//    std::copy(m.data, m.data + size * size, data);
     memcpy(data, m.data, size * size * sizeof(double));
     return *this;
 }
@@ -242,13 +244,12 @@ void Matrix::split(Matrix &_11, Matrix &_12, Matrix &_21, Matrix &_22) const
 {
     int smallerSize = _11.size;
     for (int i = 0; i < smallerSize; ++i)
-        for (int j = 0; j < smallerSize; ++j)
-        {
-            _11.set(i, j, get(i, j));
-            _12.set(i, j, get(i, j + smallerSize));
-            _21.set(i, j, get(i + smallerSize, j));
-            _22.set(i, j, get(i + smallerSize, j + smallerSize));
-        }
+    {
+        memcpy(_11.data + i * _11.size, data + i * size, smallerSize * sizeof(double));
+        memcpy(_12.data + i * _12.size, data + i * size + smallerSize, smallerSize * sizeof(double));
+        memcpy(_21.data + i * _21.size, data + (i + smallerSize) * size, smallerSize * sizeof(double));
+        memcpy(_22.data + i * _22.size, data + (i + smallerSize) * size + smallerSize, smallerSize * sizeof(double));
+    }
 }
 
 void Matrix::merge(const Matrix &_11, const Matrix &_12, const Matrix &_21, const Matrix &_22)
