@@ -84,6 +84,8 @@ public:
         allocators[10] = new Allocator<1024>;
         allocators[11] = new Allocator<2048>;
         allocators[12] = new Allocator<4096>;
+        allocators[13] = new Allocator<8192>;
+        allocators[14] = new Allocator<16384>;
     }
     void* getMatrix(int size)
     {
@@ -100,7 +102,7 @@ private:
         if (!((1 << index) >= size)) throw -1;
         return allocators[index];
     }
-    Allocator_base *allocators[13];
+    Allocator_base *allocators[15];
 };
 
 static Allocators allocators;
