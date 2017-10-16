@@ -29,7 +29,7 @@ int hob (int num)
 
 // Run the Option 3 with size n, outputing the time elapsed in nanoseconds.
 int main(int argc, const char * argv[]) {
-    int n = 512;
+    int n = 2048;
     if (argc > 1)
         n = atoi(argv[1]);
     if (n == 0)
