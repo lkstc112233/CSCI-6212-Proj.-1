@@ -18,7 +18,7 @@ public:
 	Matrix(const Matrix&);
 	Matrix(const Matrix&, int position);
     Matrix& operator=(const Matrix&);
-    ~Matrix();
+    virtual ~Matrix();
     // Naive way
     void Multiply1(const Matrix&, Matrix& output);
     // Strassen’s algorithm
@@ -39,7 +39,8 @@ public:
 		else
 			data[mappings[x] | (mappings[y] << 1)] = value;
 	}
-private:
+protected:
+    Matrix(bool b, const Matrix &m, int position) : size(m.size / 2), data(m.data + (m.size / 2) * (m.size / 2) * position){}
     void split(Matrix&,Matrix&,Matrix&,Matrix&) const;
     void merge(const Matrix&, const Matrix&, const Matrix&, const Matrix&);
     Matrix& operator+=(const Matrix&);
@@ -54,6 +55,13 @@ private:
 	void set(int position, const Matrix&);
     double* data;
     int size;
+};
+
+class TemperateMatrixStatic : public Matrix
+{
+public:
+    TemperateMatrixStatic(const Matrix&, int position);
+    ~TemperateMatrixStatic();
 };
 
 #endif /* Matrix_hpp */
