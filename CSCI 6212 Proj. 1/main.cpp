@@ -12,77 +12,23 @@
 #include <chrono>
 #include <random>
 
-#include "Matrix.hpp"
-
-int hob (int num)
-{
-    if (!num)
-        return 0;
-    
-    int ret = 1;
-    
-    while (num >>= 1)
-        ret <<= 1;
-    
-    return ret;
-}
-
 // Run the Option 3 with size n, outputing the time elapsed in nanoseconds.
 int main(int argc, const char * argv[]) {
     int n = 1024;
-    if (argc > 1)
+    int m = 1024;
+    if (argc > 2)
+    {
         n = atoi(argv[1]);
+        m = atoi(argv[2]);
+    }
     if (n == 0)
-        n = 400;
-    // creates some n-matrixes, filling with random numbers.
-    Matrix A(n);
-    Matrix B(n);
-    std::uniform_real_distribution<double> unif(-10,10);
-    std::default_random_engine re;
-    for (int i = 0; i < n; ++i)
-        for (int j = 0; j < n; ++j)
-        {
-            A.set(i, j, unif(re));
-            B.set(i, j, unif(re));
-        }
-    Matrix AN(A);
-    Matrix BN(B);
-    Matrix CN(n);
-    // benchmark: Naive method
+        n = 1024;
+    if (m == 0)
+        m = 1024;
+    // benchmark
     auto begin = std::chrono::high_resolution_clock::now();
-    AN.Multiply1(BN, CN);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << "\t";
-    int RS = hob(n - 1);
-    RS <<= 1;
-    Matrix AS(RS);
-    Matrix BS(RS);
-    Matrix CS(RS);
-    for (int i = 0; i < RS; ++i)
-        for (int j = 0; j < RS; ++j)
-        {
-            if (i < n && j < n)
-            {
-                AS.set(i, j, A.get(i, j));
-                BS.set(i, j, B.get(i, j));
-            }
-            else
-            {
-                AS.set(i, j, 0);
-                BS.set(i, j, 0);
-            }
-        }
-    // benchmark: Strassen’s algorithm
-    begin = std::chrono::high_resolution_clock::now();
-    AS.Multiply2(BS, CS);
-    end = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << std::endl;
-//    bool same = true;
-//    for (int i = 0; i < n; ++i)
-//        for (int j = 0; j < n; ++j)
-//            if (abs(AS.get(i, j) - AN.get(i, j)) > 1e-6)
-//                same = false;
-//    std::cout << (same ? "Result check passed" : "Result check failed") << std::endl;
     return 0;
 }
 

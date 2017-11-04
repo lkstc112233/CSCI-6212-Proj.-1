@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0A38AA2F1F92A8C400509B3D /* Matrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0A38AA2D1F92A8C400509B3D /* Matrix.cpp */; };
 		0A53D9A31F56627B001B54BD /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0A53D9A21F56627B001B54BD /* main.cpp */; };
 /* End PBXBuildFile section */
 
@@ -24,8 +23,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0A38AA2D1F92A8C400509B3D /* Matrix.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Matrix.cpp; sourceTree = "<group>"; };
-		0A38AA2E1F92A8C400509B3D /* Matrix.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Matrix.hpp; sourceTree = "<group>"; };
 		0A53D99F1F56627B001B54BD /* CSCI 6212 Proj. 1 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "CSCI 6212 Proj. 1"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A53D9A21F56627B001B54BD /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -61,8 +58,6 @@
 			isa = PBXGroup;
 			children = (
 				0A53D9A21F56627B001B54BD /* main.cpp */,
-				0A38AA2D1F92A8C400509B3D /* Matrix.cpp */,
-				0A38AA2E1F92A8C400509B3D /* Matrix.hpp */,
 			);
 			path = "CSCI 6212 Proj. 1";
 			sourceTree = "<group>";
@@ -124,7 +119,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0A38AA2F1F92A8C400509B3D /* Matrix.cpp in Sources */,
 				0A53D9A31F56627B001B54BD /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
