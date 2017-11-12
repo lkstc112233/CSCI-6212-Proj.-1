@@ -71,11 +71,15 @@ int main(int argc, const char * argv[]) {
     // benchmark
     auto begin = std::chrono::high_resolution_clock::now();
     for (int i = 1; i <= m; ++i)
+    {
         for (int j = 1; j <= n; ++j)
             METF(i, j);
+        if (finiate[n].first != -1)
+            break;
+    }
     METF(m, n);
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
     return 0;
 }
 
