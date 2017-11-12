@@ -70,6 +70,9 @@ int main(int argc, const char * argv[]) {
     finiate = std::vector<std::pair<int, int>>(n + 1, std::pair<int, int>(-1, -1));
     // benchmark
     auto begin = std::chrono::high_resolution_clock::now();
+    for (int i = 1; i <= m; ++i)
+        for (int j = 1; j <= n; ++j)
+            METF(i, j);
     METF(m, n);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << std::endl;
