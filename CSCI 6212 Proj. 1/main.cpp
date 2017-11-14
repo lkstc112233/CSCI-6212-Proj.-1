@@ -15,25 +15,38 @@
 
 std::string outputFilename = "output.bmp";
 
-enum Cell
+enum CellType
 {
     UNSCANNED_PATH,
     SCANNED_PATH,
     ANSWER_PATH,
     OBSTACLE,
     BEGINNING_POINT,
-    END_POINT,
+    ENDING_POINT,
 };
 
 class MazeGraphNode
 {
 public:
-    
+    CellType type;
+    int x;
+    int y;
+    int width;
+    int height;
 };
 
 class MazeGraph
 {
-    
+public:
+    CellType *image;
+    MazeGraph(CellType *imageData, int width, int height)
+    {
+        image = imageData;
+    }
+    ~MazeGraph()
+    {
+        delete[] image;
+    }
 };
 
 class InputBitmap
@@ -44,6 +57,7 @@ public:
     int filesize;
     int width;
     int height;
+    MazeGraph *graph;
     InputBitmap(std::string& ifn)
     {
         std::ifstream ifs(ifn, std::ios::binary);
@@ -60,10 +74,38 @@ public:
         header = new char[headerSize];
         ifs.seekg(0);
         ifs.read(header, headerSize);
+        int rowSize = (24 * width + 31) / 32 * 4;
+        
+        CellType* graphData = new CellType[width * height];
+        for (int i = 0; i < height; ++i)
+        {
+            ifs.seekg(arrayPos + i * rowSize);
+            for (int j = 0; j < width; ++j)
+            {
+                char red;
+                char green;
+                char blue;
+                ifs.read(&blue,1);
+                ifs.read(&green,1);
+                ifs.read(&red,1);
+                CellType tp;
+                if (red&&green&&blue)
+                    tp = UNSCANNED_PATH;
+                else if (green)
+                    tp = ENDING_POINT;
+                else if (red)
+                    tp = BEGINNING_POINT;
+                else
+                    tp = OBSTACLE;
+                graphData[i*width + j] = tp;
+            }
+        }
+        graph = new MazeGraph(graphData, width, height);
     }
     ~InputBitmap()
     {
         delete[] header;
+        delete graph;
     }
     
 };
