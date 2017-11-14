@@ -23,6 +23,7 @@ enum CellType
     OBSTACLE,
     BEGINNING_POINT,
     ENDING_POINT,
+    PROCESSED,
 };
 
 class MazeGraphNode
@@ -39,9 +40,70 @@ class MazeGraph
 {
 public:
     CellType *image;
+    bool BEOverlap = false;
+    std::vector<MazeGraphNode> vertexList;
     MazeGraph(CellType *imageData, int width, int height)
     {
         image = imageData;
+        int minBx = INT_MAX;
+        int maxBx = INT_MIN;
+        int minBy = INT_MAX;
+        int maxBy = INT_MIN;
+        int minEx = INT_MAX;
+        int maxEx = INT_MIN;
+        int minEy = INT_MAX;
+        int maxEy = INT_MIN;
+        for (int i = 0; i < height; ++i)
+            for (int j = 0; j < width; ++j)
+            {
+                switch (imageData[i * width + j])
+                {
+                    case UNSCANNED_PATH:
+                        break;
+                    case OBSTACLE:
+                        break;
+                    case BEGINNING_POINT:
+                        minBx = std::min(j, minBx);
+                        minBy = std::min(i, minBy);
+                        maxBx = std::max(j, maxBx);
+                        maxBy = std::max(i, minBy);
+                        break;
+                    case ENDING_POINT:
+                        minEx = std::min(j, minEx);
+                        minEy = std::min(i, minEy);
+                        maxEx = std::max(j, maxEx);
+                        maxEy = std::max(i, minEy);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        auto fill = [imageData, width](int minx, int miny, int maxx, int maxy, CellType type)
+        {
+            for (int i = 0; i <= maxy - miny; ++i)
+                for (int j = 0; j <= maxx - minx; ++j)
+                    imageData[(i + miny) * width + j + minx] = ANSWER_PATH;
+        };
+        if (minBx <= maxEx && minEx <= maxBx)
+            if (minBy <= maxEy && minEy <= maxBy)
+            {
+                // fill(minBx, minBy, maxBx, maxBy, ANSWER_PATH);
+                // fill(minEx, minEy, maxEx, maxEy, ANSWER_PATH);
+                for (int i = 0; i <= maxBy - minBy; ++i)
+                    for (int j = 0; j <= maxBx - minBx; ++j)
+                        imageData[(i + minBy) * width + j + minBx] = ANSWER_PATH;
+                for (int i = 0; i <= maxEy - minEy; ++i)
+                    for (int j = 0; j <= maxEx - minEx; ++j)
+                        imageData[(i + minEy) * width + j + minEx] = ANSWER_PATH;
+                BEOverlap = true;
+                return;
+            }
+        for (int i = 0; i <= maxBy - minBy; ++i)
+            for (int j = 0; j <= maxBx - minBx; ++j)
+                imageData[(i + minBy) * width + j + minBx] = PROCESSED;
+        for (int i = 0; i <= maxEy - minEy; ++i)
+            for (int j = 0; j <= maxEx - minEx; ++j)
+                imageData[(i + minEy) * width + j + minEx] = PROCESSED;
     }
     ~MazeGraph()
     {
@@ -54,16 +116,16 @@ class InputBitmap
 public:
     char *header;
     int headerSize;
+    int arrayPos;
     int filesize;
     int width;
     int height;
     MazeGraph *graph;
-    InputBitmap(std::string& ifn)
+    InputBitmap(const std::string& ifn)
     {
         std::ifstream ifs(ifn, std::ios::binary);
         ifs.seekg(2);
         ifs.read(reinterpret_cast<char*>(&filesize), 4);
-        int arrayPos;
         ifs.seekg(10);
         ifs.read(reinterpret_cast<char*>(&arrayPos), 4);
         ifs.seekg(14);
@@ -102,6 +164,47 @@ public:
         }
         graph = new MazeGraph(graphData, width, height);
     }
+    void write(std::string filename)
+    {
+        std::ofstream ofs(filename, std::ios::binary);
+        ofs.write(header, headerSize);
+        int rowSize = (24 * width + 31) / 32 * 4;
+        for (int i = 0; i < height; ++i)
+        {
+            ofs.seekp(arrayPos + i * rowSize);
+            for (int j = 0; j < width; ++j)
+            {
+                unsigned char red = 0;
+                unsigned char green = 0;
+                unsigned char blue = 0;
+                CellType tp = graph->image[i * width + j];
+                switch (tp) {
+                    case UNSCANNED_PATH:
+                        red = green = blue = 255;
+                        break;
+                    case ENDING_POINT:
+                        green = 255;
+                        break;
+                    case BEGINNING_POINT:
+                        red = 255;
+                        break;
+                    case ANSWER_PATH:
+                        red = 255;
+                        blue = 255;
+                        break;
+                    case SCANNED_PATH:
+                        green = 255;
+                        blue = 255;
+                        break;
+                    default:
+                        break;
+                }
+                ofs.put(blue);
+                ofs.put(green);
+                ofs.put(red);
+            }
+        }
+    }
     ~InputBitmap()
     {
         delete[] header;
@@ -115,25 +218,19 @@ int main(int argc, const char * argv[]) {
     if (argc < 2)
     {
         std::cerr << "INPUT MAZE MISSING" << std::endl;
+        return -1;
     }
     if (argc > 2)
     {
         outputFilename = argv[2];
     }
     
-    
     // benchmark
     auto begin = std::chrono::high_resolution_clock::now();
-    for (int i = 1; i <= m; ++i)
-    {
-        for (int j = 1; j <= n; ++j)
-            METF(i, j);
-        if (finiate[n].first != -1)
-            break;
-    }
-    METF(m, n);
+    InputBitmap bitmap((std::string(argv[1])));
+    bitmap.write(outputFilename);
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() << std::endl;
     return 0;
 }
 
