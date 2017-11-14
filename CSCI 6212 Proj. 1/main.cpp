@@ -7,67 +7,79 @@
 //
 
 #include <iostream>
+#include <fstream>
 #include <utility>
 #include <vector>
 #include <chrono>
 #include <algorithm>
 
-// Table holding all values.
-std::vector<std::vector<int>> results;
-std::vector<std::vector<int>> splitPoints;
-std::vector<std::pair<int, int>> finiate;
+std::string outputFilename = "output.bmp";
 
-// m eggs, n floors
-int METF(int m, int n)
+enum Cell
 {
-    int reges = results[m][n];
-    if (reges != -1)
-        return reges;
-    if (n == 1)
+    UNSCANNED_PATH,
+    SCANNED_PATH,
+    ANSWER_PATH,
+    OBSTACLE,
+    BEGINNING_POINT,
+    END_POINT,
+};
+
+class MazeGraphNode
+{
+public:
+    
+};
+
+class MazeGraph
+{
+    
+};
+
+class InputBitmap
+{
+public:
+    char *header;
+    int headerSize;
+    int filesize;
+    int width;
+    int height;
+    InputBitmap(std::string& ifn)
     {
-        splitPoints[m][n] = 0;
-        return results[m][n] = 0;
+        std::ifstream ifs(ifn, std::ios::binary);
+        ifs.seekg(2);
+        ifs.read(reinterpret_cast<char*>(&filesize), 4);
+        int arrayPos;
+        ifs.seekg(10);
+        ifs.read(reinterpret_cast<char*>(&arrayPos), 4);
+        ifs.seekg(14);
+        ifs.read(reinterpret_cast<char*>(&headerSize), 4);
+        ifs.read(reinterpret_cast<char*>(&width), 4);
+        ifs.read(reinterpret_cast<char*>(&height), 4);
+        headerSize += 14;
+        header = new char[headerSize];
+        ifs.seekg(0);
+        ifs.read(header, headerSize);
     }
-    if (m == 1)
+    ~InputBitmap()
     {
-        splitPoints[m][n] = 1;
-        return results[m][n] = n - 1;
+        delete[] header;
     }
-    if (m <= 0) throw -1;
-    if (finiate[n].first != -1)
-        if (m >= finiate[n].second)
-            return finiate[n].first;
-    int minimal = INT_MAX;
-    for (int k = 1; k < n; ++k)
-    {
-        int temp = std::max(METF(m, n - k), METF(m - 1, k)) + 1;
-        if (temp <= minimal)
-        {
-            minimal = temp;
-            splitPoints[m][n] = k;
-        }
-    }
-    if (splitPoints[m][n] == splitPoints[m - 1][n])
-        finiate[n] = std::make_pair(splitPoints[m][n], m);
-    return results[m][n] = minimal;
-}
+    
+};
 
 // Run the Option 3 with size n, outputing the time elapsed in nanoseconds.
 int main(int argc, const char * argv[]) {
-    int n = 1024;
-    int m = 1024;
+    if (argc < 2)
+    {
+        std::cerr << "INPUT MAZE MISSING" << std::endl;
+    }
     if (argc > 2)
     {
-        m = atoi(argv[1]);
-        n = atoi(argv[2]);
+        outputFilename = argv[2];
     }
-    if (n == 0)
-        n = 1024;
-    if (m == 0)
-        m = 1024;
-    results = std::vector<std::vector<int>>(m + 1, std::vector<int>(n + 1, -1));
-    splitPoints = std::vector<std::vector<int>>(m + 1, std::vector<int>(n + 1, -1));
-    finiate = std::vector<std::pair<int, int>>(n + 1, std::pair<int, int>(-1, -1));
+    
+    
     // benchmark
     auto begin = std::chrono::high_resolution_clock::now();
     for (int i = 1; i <= m; ++i)
