@@ -86,7 +86,6 @@ public:
     MazeGraph(CellType *imageData, int width, int height)
     {
         auto& vertexList = vertexes;
-        auto countFreeCell = [imageData, width, height]()->int{int result = 0; for (int i = 0; i < width * height; ++i) result += imageData[i] == UNSCANNED_PATH?1:0;return result;};
         image = imageData;
         int minBx = INT_MAX;
         int maxBx = INT_MIN;
@@ -143,27 +142,27 @@ public:
         auto addEdges = [&edges, imageData, width, height](int min, int max, EdgeGrowDirection direction, int line)
         {
             // Edge check
-            if (min < 0) return;
-            if (line < 0) return;
-            if (min > max) return;
+            if (min < 0) min = 0;
+            if (line < 0) line = 0;
             switch (direction) {
                 case X_DECREASE:
                 case X_INCREASE:
                     if (max >= height)
-                        return;
+                        max = height - 1;
                     if (line >= width)
-                        return;
+                        line = width - 1;
                     break;
                 case Y_DECREASE:
                 case Y_INCREASE:
                     if (max >= width)
-                        return;
+                        max = width - 1;
                     if (line >= height)
-                        return;
+                        line = height - 1;
                     break;
                 default:
                     break;
             }
+            if (min > max) return;
             int current = min;
             for (int i = 0; i <= max - min; ++i)
             {
@@ -186,7 +185,7 @@ public:
                 }
                 else
                 {
-                    if (current != i)
+                    if (current != i + min)
                     {
                         edges.emplace_back(min + current, min + i, direction, line);
                     }
@@ -388,6 +387,8 @@ public:
                         green = 255;
                         blue = 255;
                         break;
+                    case PROCESSED:
+                        blue = 255;
                     default:
                         break;
                 }
