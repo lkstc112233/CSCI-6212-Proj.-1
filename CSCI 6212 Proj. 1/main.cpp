@@ -30,10 +30,51 @@ class MazeGraphNode
 {
 public:
     CellType type;
-    int x;
-    int y;
-    int width;
-    int height;
+    int x1;
+    int y1;
+    int x2;
+    int y2;
+    MazeGraphNode(int minx, int miny, int maxx, int maxy, CellType tp)
+    {
+        x1 = minx;
+        x2 = maxx;
+        y1 = miny;
+        y2 = maxy;
+        type = tp;
+    }
+};
+
+enum EdgeGrowDirection
+{
+    X_INCREASE,
+    Y_INCREASE,
+    X_DECREASE,
+    Y_DECREASE,
+};
+
+class MazeGraphEdge
+{
+public:
+    MazeGraphEdge()
+    {
+        
+    }
+};
+
+class Edge
+{
+public:
+    EdgeGrowDirection grow;
+    int minbound;
+    int maxbound;
+    int line;
+    Edge(int min, int max, EdgeGrowDirection dir, int baseline)
+    {
+        minbound = min;
+        maxbound = max;
+        grow = dir;
+        line = baseline;
+    }
 };
 
 class MazeGraph
@@ -82,28 +123,158 @@ public:
         {
             for (int i = 0; i <= maxy - miny; ++i)
                 for (int j = 0; j <= maxx - minx; ++j)
-                    imageData[(i + miny) * width + j + minx] = ANSWER_PATH;
+                    imageData[(i + miny) * width + j + minx] = type;
         };
         if (minBx <= maxEx && minEx <= maxBx)
             if (minBy <= maxEy && minEy <= maxBy)
             {
-                // fill(minBx, minBy, maxBx, maxBy, ANSWER_PATH);
-                // fill(minEx, minEy, maxEx, maxEy, ANSWER_PATH);
-                for (int i = 0; i <= maxBy - minBy; ++i)
-                    for (int j = 0; j <= maxBx - minBx; ++j)
-                        imageData[(i + minBy) * width + j + minBx] = ANSWER_PATH;
-                for (int i = 0; i <= maxEy - minEy; ++i)
-                    for (int j = 0; j <= maxEx - minEx; ++j)
-                        imageData[(i + minEy) * width + j + minEx] = ANSWER_PATH;
+                fill(minBx, minBy, maxBx, maxBy, ANSWER_PATH);
+                fill(minEx, minEy, maxEx, maxEy, ANSWER_PATH);
                 BEOverlap = true;
                 return;
             }
-        for (int i = 0; i <= maxBy - minBy; ++i)
-            for (int j = 0; j <= maxBx - minBx; ++j)
-                imageData[(i + minBy) * width + j + minBx] = PROCESSED;
-        for (int i = 0; i <= maxEy - minEy; ++i)
-            for (int j = 0; j <= maxEx - minEx; ++j)
-                imageData[(i + minEy) * width + j + minEx] = PROCESSED;
+        fill(minBx, minBy, maxBx, maxBy, PROCESSED);
+        fill(minEx, minEy, maxEx, maxEy, PROCESSED);
+        vertexList.emplace_back(minBx, minBy, maxBx, maxBy, BEGINNING_POINT);
+        vertexList.emplace_back(minBx, minBy, maxBx, maxBy, ENDING_POINT);
+        std::vector<Edge> edges;
+        auto addEdges = [&edges, imageData, width, height](int min, int max, EdgeGrowDirection direction, int line)
+        {
+            // Edge check
+            if (min < 0) return;
+            if (line < 0) return;
+            switch (direction) {
+                case X_DECREASE:
+                case X_INCREASE:
+                    if (max >= height)
+                        return;
+                    if (line >= width)
+                        return;
+                    break;
+                case Y_DECREASE:
+                case Y_INCREASE:
+                    if (max >= width)
+                        return;
+                    if (line >= height)
+                        return;
+                    break;
+                default:
+                    break;
+            }
+            int current = min;
+            for (int i = 0; i <= max - min; ++i)
+            {
+                int index;
+                switch (direction) {
+                    case X_DECREASE:
+                    case X_INCREASE:
+                        index = width * (min + i) + line;
+                        break;
+                    case Y_DECREASE:
+                    case Y_INCREASE:
+                        index = width * line + (min + i);
+                        break;
+                    default:
+                        break;
+                }
+                if (imageData[index] == UNSCANNED_PATH)
+                {
+                    imageData[index] = PROCESSED;
+                }
+                else
+                {
+                    if (current != i)
+                    {
+                        edges.emplace_back(min + current, min + i, direction, line);
+                    }
+                    current = i + min + 1;
+                }
+            }
+            if (current != max)
+                edges.emplace_back(current, max, direction, line);
+        };
+        addEdges(minBx, maxBx, Y_INCREASE, maxBy);
+        addEdges(minBx, maxBx, Y_DECREASE, minBy);
+        addEdges(minBy, maxBy, X_INCREASE, maxBx);
+        addEdges(minBy, maxBy, X_INCREASE, maxBx);
+        auto expandEdge = [&addEdges, imageData, width, this](const Edge& e)
+        {
+            int line = e.line;
+            bool expanding = true;
+            int x = -1;
+            int y = -1;
+            while (expanding)
+            {
+                switch (e.grow) {
+                    case X_DECREASE:
+                        line -= 2;
+                    case X_INCREASE:
+                        line += 1;
+                        if (line >= width)
+                            {
+                                expanding = false;
+                                break;
+                            }
+                        y = e.minbound;
+                        x = line;
+                        break;
+                    case Y_DECREASE:
+                        line -= 2;
+                    case Y_INCREASE:
+                        line += 1;
+                        x = e.minbound;
+                        y = line;
+                        break;
+                    default:
+                        break;
+                }
+                for (int i = 0; i <= e.maxbound - e.minbound; ++i)
+                {
+                    int index;
+                    int xl = x;
+                    int yl = y;
+                    switch (e.grow) {
+                        case X_DECREASE:
+                        case X_INCREASE:
+                            yl += i;
+                            break;
+                        case Y_DECREASE:
+                        case Y_INCREASE:
+                            xl += i;
+                            break;
+                        default:
+                            break;
+                    }
+                    index = width * yl + (xl + i);
+                    if (imageData[index] != UNSCANNED_PATH)
+                        expanding = false;
+                }
+            }
+            addEdges(e.minbound, e.maxbound, e.grow, line);
+            line -= 1;
+            switch (e.grow) {
+                case X_DECREASE:
+                case X_INCREASE:
+                    vertexList.emplace_back(std::min(line, e.line), e.minbound, std::max(line, e.line), e.maxbound, UNSCANNED_PATH);
+                    addEdges(std::min(line, e.line), std::max(line, e.line), Y_INCREASE, e.minbound - 1);
+                    addEdges(std::min(line, e.line), std::max(line, e.line), Y_DECREASE, e.maxbound + 1);
+                    break;
+                case Y_DECREASE:
+                case Y_INCREASE:
+                    vertexList.emplace_back(e.minbound, std::min(line, e.line), e.maxbound, std::max(line, e.line), UNSCANNED_PATH);
+                    addEdges(std::min(line, e.line), std::max(line, e.line), X_INCREASE, e.minbound - 1);
+                    addEdges(std::min(line, e.line), std::max(line, e.line), X_DECREASE, e.maxbound + 1);
+                    break;
+                default:
+                    break;
+            }
+        };
+        while (edges.size())
+        {
+            auto e = edges.back();
+            edges.pop_back();
+            expandEdge(e);
+        }
     }
     ~MazeGraph()
     {
