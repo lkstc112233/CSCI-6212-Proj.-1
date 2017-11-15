@@ -190,31 +190,31 @@ public:
                     current = i + min + 1;
                 }
             }
-            if (current != max)
+            if (current < max)
                 edges.emplace_back(current, max, direction, line);
         };
-        addEdges(minBx, maxBx, Y_INCREASE, maxBy);
-        addEdges(minBx, maxBx, Y_DECREASE, minBy);
-        addEdges(minBy, maxBy, X_INCREASE, maxBx);
-        addEdges(minBy, maxBy, X_INCREASE, maxBx);
-        auto expandEdge = [&addEdges, imageData, width, this](const Edge& e)
+        addEdges(minBx, maxBx, Y_INCREASE, maxBy + 1);
+        addEdges(minBx, maxBx, Y_DECREASE, minBy - 1);
+        addEdges(minBy, maxBy, X_INCREASE, maxBx + 1);
+        addEdges(minBy, maxBy, X_DECREASE, minBx - 1);
+        auto expandEdge = [&addEdges, imageData, width, height, this](const Edge& e)
         {
             int line = e.line;
             bool expanding = true;
-            int x = -1;
-            int y = -1;
             while (expanding)
             {
+                int x = -1;
+                int y = -1;
                 switch (e.grow) {
                     case X_DECREASE:
                         line -= 2;
                     case X_INCREASE:
                         line += 1;
-                        if (line >= width)
-                            {
-                                expanding = false;
-                                break;
-                            }
+                        if (line >= width || line < 0)
+                        {
+                            expanding = false;
+                            break;
+                        }
                         y = e.minbound;
                         x = line;
                         break;
@@ -222,12 +222,19 @@ public:
                         line -= 2;
                     case Y_INCREASE:
                         line += 1;
+                        if (line >= height || line < 0)
+                        {
+                            expanding = false;
+                            break;
+                        }
                         x = e.minbound;
                         y = line;
                         break;
                     default:
                         break;
                 }
+                if (!expanding)
+                    break;
                 for (int i = 0; i <= e.maxbound - e.minbound; ++i)
                 {
                     int index;
@@ -248,6 +255,8 @@ public:
                     index = width * yl + (xl + i);
                     if (imageData[index] != UNSCANNED_PATH)
                         expanding = false;
+                    else
+                        imageData[index] = PROCESSED;
                 }
             }
             addEdges(e.minbound, e.maxbound, e.grow, line);
