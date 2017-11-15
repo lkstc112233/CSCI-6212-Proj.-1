@@ -82,9 +82,11 @@ class MazeGraph
 public:
     CellType *image;
     bool BEOverlap = false;
-    std::vector<MazeGraphNode> vertexList;
+    std::vector<MazeGraphNode> vertexes;
     MazeGraph(CellType *imageData, int width, int height)
     {
+        auto& vertexList = vertexes;
+        auto countFreeCell = [imageData, width, height]()->int{int result = 0; for (int i = 0; i < width * height; ++i) result += imageData[i] == UNSCANNED_PATH?1:0;return result;};
         image = imageData;
         int minBx = INT_MAX;
         int maxBx = INT_MIN;
@@ -143,6 +145,7 @@ public:
             // Edge check
             if (min < 0) return;
             if (line < 0) return;
+            if (min > max) return;
             switch (direction) {
                 case X_DECREASE:
                 case X_INCREASE:
@@ -197,7 +200,7 @@ public:
         addEdges(minBx, maxBx, Y_DECREASE, minBy - 1);
         addEdges(minBy, maxBy, X_INCREASE, maxBx + 1);
         addEdges(minBy, maxBy, X_DECREASE, minBx - 1);
-        auto expandEdge = [&addEdges, imageData, width, height, this](const Edge& e)
+        auto expandEdge = [&addEdges, imageData, width, height, &vertexList](const Edge& e)
         {
             int line = e.line;
             bool expanding = true;
@@ -260,7 +263,16 @@ public:
                 }
             }
             addEdges(e.minbound, e.maxbound, e.grow, line);
-            line -= 1;
+            switch (e.grow) {
+                case X_DECREASE:
+                case Y_DECREASE:
+                    line += 1;
+                    break;
+                case X_INCREASE:
+                case Y_INCREASE:
+                    line -= 1;
+                    break;
+            }
             switch (e.grow) {
                 case X_DECREASE:
                 case X_INCREASE:
