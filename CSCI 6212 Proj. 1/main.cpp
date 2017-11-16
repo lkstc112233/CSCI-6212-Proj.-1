@@ -12,6 +12,7 @@
 #include <vector>
 #include <chrono>
 #include <algorithm>
+#include <sstream>
 
 std::string outputFilename = "output.bmp";
 
@@ -83,8 +84,9 @@ public:
     CellType *image;
     bool BEOverlap = false;
     std::vector<MazeGraphNode> vertexes;
-    MazeGraph(CellType *imageData, int width, int height)
+    MazeGraph(CellType *imageData, int width, int height, int pause = 0)
     {
+        int roundCount = 0;
         auto& vertexList = vertexes;
         image = imageData;
         int minBx = INT_MAX;
@@ -187,7 +189,7 @@ public:
                 {
                     if (current != i + min)
                     {
-                        edges.emplace_back(min + current, min + i, direction, line);
+                        edges.emplace_back(current, min + i, direction, line);
                     }
                     current = i + min + 1;
                 }
@@ -310,6 +312,9 @@ public:
         {
             auto e = edges.back();
             edges.pop_back();
+            if (pause > 0)
+                if (++roundCount > pause)
+                    break;
             expandEdge(e);
         }
     }
@@ -330,6 +335,7 @@ public:
     int height;
     MazeGraph *graph;
     InputBitmap(const std::string& ifn)
+    : graph(nullptr)
     {
         std::ifstream ifs(ifn, std::ios::binary);
         ifs.seekg(2);
@@ -370,7 +376,16 @@ public:
                 graphData[i*width + j] = tp;
             }
         }
-        graph = new MazeGraph(graphData, width, height);
+        for (int i = 1; i < 100; ++i)
+        {
+            std::stringstream ss;
+            ss << i;
+            delete graph;
+            auto gd = new CellType[width * height];
+            memcpy(gd, graphData, sizeof(CellType)*width*height);
+            graph = new MazeGraph(gd, width, height, i);
+            write(ss.str()+" "+outputFilename);
+        }
     }
     void write(std::string filename)
     {
