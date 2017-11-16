@@ -3,7 +3,10 @@
    version = "1.0">
    <ContextStates>
       <ContextState
-         contextName = "MazeGraph::MazeGraph(CellType*, int, int):main.cpp">
+         contextName = "MazeGraph::MazeGraph(CellNode*, int, int):main.cpp">
+      </ContextState>
+      <ContextState
+         contextName = "MazeGraph::MazeGraph(CellNode*, int, int)::&apos;lambda&apos;(Edge const&amp;)::operator()(Edge const&amp;) const:main.cpp">
       </ContextState>
       <ContextState
          contextName = "MazeGraph::MazeGraph(CellType*, int, int)::&apos;lambda&apos;(int, int, EdgeGrowDirection, int)::operator()(int, int, EdgeGrowDirection, int) const:main.cpp">

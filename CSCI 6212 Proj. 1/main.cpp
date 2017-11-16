@@ -84,10 +84,10 @@ class MazeGraph
 public:
     CellNode *image;
     bool BEOverlap = false;
-    std::vector<MazeGraphNode> vertexes;
+    std::vector<MazeGraphNode*> vertexes;
     MazeGraph(CellNode *imageData, int width, int height)
     {
-        std::vector<MazeGraphNode>& vertexList = vertexes;
+        std::vector<MazeGraphNode*>& vertexList = vertexes;
         image = imageData;
         int minBx = INT_MAX;
         int maxBx = INT_MIN;
@@ -141,8 +141,8 @@ public:
             }
         auto addVertex = [&vertexList, &fill](int minx, int miny, int maxx, int maxy, CellType type, MazeGraphNode* ori = nullptr) -> MazeGraphNode*
         {
-            vertexList.emplace_back(minx, miny, maxx, maxy, type, ori);
-            auto p = &vertexList.back();
+            vertexList.emplace_back(new MazeGraphNode(minx, miny, maxx, maxy, type, ori));
+            auto p = vertexList.back();
             fill(minx, miny, maxx, maxy, PROCESSED, p);
             return p;
         };
@@ -213,7 +213,7 @@ public:
         isEnd |= addEdges(minBy, maxBy, beginVertexNode, X_DECREASE, minBx - 1);
         if (isEnd)
         {
-            vertexList[1].directFrom = beginVertexNode;
+            vertexList[1]->directFrom = beginVertexNode;
             return;
         }
         auto expandEdge = [&addEdges, &addVertex, imageData, width, height, &vertexList](const Edge& e) -> bool
@@ -323,7 +323,7 @@ public:
             isEnd |= addEdges(e.minbound, e.maxbound, newVertex, e.grow, lineold);
             if (isEnd)
             {
-                vertexList[1].directFrom = newVertex;
+                vertexList[1]->directFrom = newVertex;
                 return true;
             }
             return false;
@@ -335,7 +335,7 @@ public:
             if (expandEdge(e))
                 break;
         }
-        auto iterator = vertexes[1].directFrom;
+        auto iterator = vertexes[1]->directFrom;
         while (iterator && iterator != beginVertexNode)
         {
             iterator->type = ANSWER_PATH;
@@ -344,6 +344,8 @@ public:
     }
     ~MazeGraph()
     {
+        for (auto p : vertexes)
+            delete p;
         delete[] image;
     }
 };
@@ -405,10 +407,10 @@ public:
     {
         for (auto v : graph->vertexes)
         {
-            for (int i = v.x1; i <= v.x2; ++i)
-                for (int j = v.y1; j <= v.y2; ++j)
+            for (int i = v->x1; i <= v->x2; ++i)
+                for (int j = v->y1; j <= v->y2; ++j)
                 {
-                    graph->image[width * j + i].type = v.type;
+                    graph->image[width * j + i].type = v->type;
                 }
         }
         std::ofstream ofs(filename, std::ios::binary);
