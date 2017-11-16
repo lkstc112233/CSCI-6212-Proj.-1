@@ -187,7 +187,7 @@ public:
                 {
                     if (current != i + min)
                     {
-                        edges.emplace_back(min + current, min + i, direction, line);
+                        edges.emplace_back(current, min + i - 1, direction, line);
                     }
                     current = i + min + 1;
                 }
