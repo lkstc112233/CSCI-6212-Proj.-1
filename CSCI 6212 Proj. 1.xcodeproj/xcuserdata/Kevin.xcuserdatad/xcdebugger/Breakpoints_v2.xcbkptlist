@@ -10,12 +10,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "CSCI 6212 Proj. 1/main.cpp"
-            timestampString = "532486618.573318"
+            timestampString = "532563768.077376"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "283"
-            endingLineNumber = "283"
-            landmarkName = "MazeGraph(CellType *imageData, int width, int height)"
+            startingLineNumber = "296"
+            endingLineNumber = "296"
+            landmarkName = "MazeGraph(CellNode *imageData, int width, int height)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -26,12 +26,61 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "CSCI 6212 Proj. 1/main.cpp"
-            timestampString = "532486618.57366"
+            timestampString = "532563768.077779"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "197"
-            endingLineNumber = "197"
-            landmarkName = "MazeGraph(CellType *imageData, int width, int height)"
+            startingLineNumber = "208"
+            endingLineNumber = "208"
+            landmarkName = "MazeGraph(CellNode *imageData, int width, int height)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "CSCI 6212 Proj. 1/main.cpp"
+            timestampString = "532563768.078028"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "341"
+            endingLineNumber = "341"
+            landmarkName = "MazeGraph(CellNode *imageData, int width, int height)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "CSCI 6212 Proj. 1/main.cpp"
+            timestampString = "532563768.078273"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "150"
+            endingLineNumber = "150"
+            landmarkName = "MazeGraph(CellNode *imageData, int width, int height)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            condition = "minx == 44 &amp;&amp; maxx == 55 &amp;&amp; miny == 17 &amp;&amp; maxy == 21"
+            continueAfterRunningActions = "No"
+            filePath = "CSCI 6212 Proj. 1/main.cpp"
+            timestampString = "532563768.078508"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "144"
+            endingLineNumber = "144"
+            landmarkName = "MazeGraph(CellNode *imageData, int width, int height)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

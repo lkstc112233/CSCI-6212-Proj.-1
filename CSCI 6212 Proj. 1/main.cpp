@@ -43,14 +43,15 @@ public:
     int y1;
     int x2;
     int y2;
-    MazeGraphNode(int minx, int miny, int maxx, int maxy, CellType tp)
-    {
-        x1 = minx;
-        x2 = maxx;
-        y1 = miny;
-        y2 = maxy;
-        type = tp;
-    }
+    MazeGraphNode* directFrom;
+    MazeGraphNode(int minx, int miny, int maxx, int maxy, CellType tp, MazeGraphNode* ori = nullptr)
+    : x1(minx)
+    , x2(maxx)
+    , y1(miny)
+    , y2(maxy)
+    , type(tp)
+    , directFrom(ori)
+    {}
 };
 
 enum EdgeGrowDirection
@@ -61,15 +62,6 @@ enum EdgeGrowDirection
     Y_DECREASE,
 };
 
-class MazeGraphEdge
-{
-public:
-    MazeGraphEdge()
-    {
-        
-    }
-};
-
 class Edge
 {
 public:
@@ -77,13 +69,14 @@ public:
     int minbound;
     int maxbound;
     int line;
-    Edge(int min, int max, EdgeGrowDirection dir, int baseline)
-    {
-        minbound = min;
-        maxbound = max;
-        grow = dir;
-        line = baseline;
-    }
+    MazeGraphNode* origin;
+    Edge(int min, int max, EdgeGrowDirection dir, int baseline, MazeGraphNode* ori)
+    : minbound(min)
+    , maxbound(max)
+    , grow(dir)
+    , line(baseline)
+    , origin(ori)
+    {}
 };
 
 class MazeGraph
@@ -94,7 +87,7 @@ public:
     std::vector<MazeGraphNode> vertexes;
     MazeGraph(CellNode *imageData, int width, int height)
     {
-        auto& vertexList = vertexes;
+        std::vector<MazeGraphNode>& vertexList = vertexes;
         image = imageData;
         int minBx = INT_MAX;
         int maxBx = INT_MIN;
@@ -129,26 +122,34 @@ public:
                         break;
                 }
             }
-        auto fill = [imageData, width](int minx, int miny, int maxx, int maxy, CellType type)
+        auto fill = [imageData, width](int minx, int miny, int maxx, int maxy, CellType type, MazeGraphNode* belong = nullptr)
         {
             for (int i = 0; i <= maxy - miny; ++i)
                 for (int j = 0; j <= maxx - minx; ++j)
+                {
                     imageData[(i + miny) * width + j + minx].type = type;
+                    imageData[(i + miny) * width + j + minx].belonging = belong;
+                }
         };
         if (minBx <= maxEx && minEx <= maxBx)
             if (minBy <= maxEy && minEy <= maxBy)
             {
-                fill(minBx, minBy, maxBx, maxBy, ANSWER_PATH);
-                fill(minEx, minEy, maxEx, maxEy, ANSWER_PATH);
+                fill(minBx, minBy, maxBx, maxBy, BEGINNING_POINT);
+                fill(minEx, minEy, maxEx, maxEy, ENDING_POINT);
                 BEOverlap = true;
                 return;
             }
-        fill(minBx, minBy, maxBx, maxBy, PROCESSED);
-        fill(minEx, minEy, maxEx, maxEy, PROCESSED);
-        vertexList.emplace_back(minBx, minBy, maxBx, maxBy, BEGINNING_POINT);
-        vertexList.emplace_back(minEx, minEy, maxEx, maxEy, ENDING_POINT);
+        auto addVertex = [&vertexList, &fill](int minx, int miny, int maxx, int maxy, CellType type, MazeGraphNode* ori = nullptr) -> MazeGraphNode*
+        {
+            vertexList.emplace_back(minx, miny, maxx, maxy, type, ori);
+            auto p = &vertexList.back();
+            fill(minx, miny, maxx, maxy, PROCESSED, p);
+            return p;
+        };
+        auto beginVertexNode = addVertex(minBx, minBy, maxBx, maxBy, BEGINNING_POINT);
+        addVertex(minEx, minEy, maxEx, maxEy, ENDING_POINT);
         std::vector<Edge> edges;
-        auto addEdges = [&edges, imageData, width, height](int min, int max, EdgeGrowDirection direction, int line)
+        auto addEdges = [&edges, imageData, width, height](int min, int max, MazeGraphNode* node,EdgeGrowDirection direction, int line) -> bool
         {
             // Edge check
             if (min < 0) min = 0;
@@ -171,7 +172,7 @@ public:
                 default:
                     break;
             }
-            if (min > max) return;
+            if (min > max) throw -1;
             int current = min;
             for (int i = 0; i <= max - min; ++i)
             {
@@ -189,26 +190,33 @@ public:
                         break;
                 }
                 if (imageData[index].type == UNSCANNED_PATH)
-                {
                     imageData[index].type = PROCESSED;
-                }
+                else if (imageData[index].belonging && imageData[index].belonging->type == ENDING_POINT)
+                    return true;
                 else
                 {
                     if (current != i + min)
                     {
-                        edges.emplace_back(current, min + i - 1, direction, line);
+                        edges.emplace_back(current, min + i - 1, direction, line, node);
                     }
                     current = i + min + 1;
                 }
             }
             if (current <= max)
-                edges.emplace_back(current, max, direction, line);
+                edges.emplace_back(current, max, direction, line, node);
+            return false;
         };
-        addEdges(minBx, maxBx, Y_INCREASE, maxBy + 1);
-        addEdges(minBx, maxBx, Y_DECREASE, minBy - 1);
-        addEdges(minBy, maxBy, X_INCREASE, maxBx + 1);
-        addEdges(minBy, maxBy, X_DECREASE, minBx - 1);
-        auto expandEdge = [&addEdges, imageData, width, height, &vertexList](const Edge& e)
+        bool isEnd = false;
+        isEnd |= addEdges(minBx, maxBx, beginVertexNode, Y_INCREASE, maxBy + 1);
+        isEnd |= addEdges(minBx, maxBx, beginVertexNode, Y_DECREASE, minBy - 1);
+        isEnd |= addEdges(minBy, maxBy, beginVertexNode, X_INCREASE, maxBx + 1);
+        isEnd |= addEdges(minBy, maxBy, beginVertexNode, X_DECREASE, minBx - 1);
+        if (isEnd)
+        {
+            vertexList[1].directFrom = beginVertexNode;
+            return;
+        }
+        auto expandEdge = [&addEdges, &addVertex, imageData, width, height, &vertexList](const Edge& e) -> bool
         {
             int line = e.line;
             bool expanding = true;
@@ -280,14 +288,10 @@ public:
                 };
                 iterate(checkCanContinue);
                 if (expanding)
-                {
                     iterate(markCheckedDots);
-                }
-                else
-                {
-                }
             }
-            addEdges(e.minbound, e.maxbound, e.grow, line);
+            int lineold = line;
+            bool isEnd = false;
             switch (e.grow) {
                 case X_DECREASE:
                 case Y_DECREASE:
@@ -298,28 +302,44 @@ public:
                     line -= 1;
                     break;
             }
+            MazeGraphNode* newVertex;
             switch (e.grow) {
                 case X_DECREASE:
                 case X_INCREASE:
-                    vertexList.emplace_back(std::min(line, e.line), e.minbound, std::max(line, e.line), e.maxbound, ANSWER_PATH);
-                    addEdges(std::min(line, e.line), std::max(line, e.line), Y_INCREASE, e.maxbound + 1);
-                    addEdges(std::min(line, e.line), std::max(line, e.line), Y_DECREASE, e.minbound - 1);
+                    newVertex = addVertex(std::min(line, e.line), e.minbound, std::max(line, e.line), e.maxbound, SCANNED_PATH, e.origin);
+                    isEnd |= addEdges(std::min(line, e.line), std::max(line, e.line), newVertex, Y_INCREASE, e.maxbound + 1);
+                    isEnd |= addEdges(std::min(line, e.line), std::max(line, e.line), newVertex, Y_DECREASE, e.minbound - 1);
                     break;
                 case Y_DECREASE:
                 case Y_INCREASE:
-                    vertexList.emplace_back(e.minbound, std::min(line, e.line), e.maxbound, std::max(line, e.line), SCANNED_PATH);
-                    addEdges(std::min(line, e.line), std::max(line, e.line), X_INCREASE, e.maxbound + 1);
-                    addEdges(std::min(line, e.line), std::max(line, e.line), X_DECREASE, e.minbound - 1);
+                    newVertex = addVertex(e.minbound, std::min(line, e.line), e.maxbound, std::max(line, e.line), SCANNED_PATH, e.origin);
+                    isEnd |= addEdges(std::min(line, e.line), std::max(line, e.line), newVertex, X_INCREASE, e.maxbound + 1);
+                    isEnd |= addEdges(std::min(line, e.line), std::max(line, e.line), newVertex, X_DECREASE, e.minbound - 1);
                     break;
                 default:
+                    newVertex = nullptr;
                     break;
             }
+            isEnd |= addEdges(e.minbound, e.maxbound, newVertex, e.grow, lineold);
+            if (isEnd)
+            {
+                vertexList[1].directFrom = newVertex;
+                return true;
+            }
+            return false;
         };
         while (edges.size())
         {
             auto e = edges.back();
             edges.pop_back();
-            expandEdge(e);
+            if (expandEdge(e))
+                break;
+        }
+        auto iterator = vertexes[1].directFrom;
+        while (iterator && iterator != beginVertexNode)
+        {
+            iterator->type = ANSWER_PATH;
+            iterator = iterator->directFrom;
         }
     }
     ~MazeGraph()
