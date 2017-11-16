@@ -26,6 +26,15 @@ enum CellType
     PROCESSED,
 };
 
+class MazeGraphNode;
+class CellNode
+{
+public:
+    CellType type;
+    MazeGraphNode* belonging;
+    CellNode():belonging(nullptr){}
+};
+
 class MazeGraphNode
 {
 public:
@@ -80,10 +89,10 @@ public:
 class MazeGraph
 {
 public:
-    CellType *image;
+    CellNode *image;
     bool BEOverlap = false;
     std::vector<MazeGraphNode> vertexes;
-    MazeGraph(CellType *imageData, int width, int height)
+    MazeGraph(CellNode *imageData, int width, int height)
     {
         auto& vertexList = vertexes;
         image = imageData;
@@ -98,7 +107,7 @@ public:
         for (int i = 0; i < height; ++i)
             for (int j = 0; j < width; ++j)
             {
-                switch (imageData[i * width + j])
+                switch (imageData[i * width + j].type)
                 {
                     case UNSCANNED_PATH:
                         break;
@@ -124,7 +133,7 @@ public:
         {
             for (int i = 0; i <= maxy - miny; ++i)
                 for (int j = 0; j <= maxx - minx; ++j)
-                    imageData[(i + miny) * width + j + minx] = type;
+                    imageData[(i + miny) * width + j + minx].type = type;
         };
         if (minBx <= maxEx && minEx <= maxBx)
             if (minBy <= maxEy && minEy <= maxBy)
@@ -179,9 +188,9 @@ public:
                     default:
                         break;
                 }
-                if (imageData[index] == UNSCANNED_PATH)
+                if (imageData[index].type == UNSCANNED_PATH)
                 {
-                    imageData[index] = PROCESSED;
+                    imageData[index].type = PROCESSED;
                 }
                 else
                 {
@@ -239,12 +248,12 @@ public:
                     break;
                 auto checkCanContinue = [imageData, &expanding](int index)
                 {
-                    if (imageData[index] != UNSCANNED_PATH)
+                    if (imageData[index].type != UNSCANNED_PATH)
                         expanding = false;
                 };
                 auto markCheckedDots = [imageData](int index)
                 {
-                    imageData[index] = PROCESSED;
+                    imageData[index].type = PROCESSED;
                 };
                 auto iterate = [x, y, &e, width, &expanding](std::function<void(int)> f)
                 {
@@ -346,7 +355,7 @@ public:
         ifs.read(header, headerSize);
         int rowSize = (24 * width + 31) / 32 * 4;
         
-        CellType* graphData = new CellType[width * height];
+        CellNode* graphData = new CellNode[width * height];
         for (int i = 0; i < height; ++i)
         {
             ifs.seekg(arrayPos + i * rowSize);
@@ -367,7 +376,7 @@ public:
                     tp = BEGINNING_POINT;
                 else
                     tp = OBSTACLE;
-                graphData[i*width + j] = tp;
+                graphData[i*width + j].type = tp;
             }
         }
         graph = new MazeGraph(graphData, width, height);
@@ -379,7 +388,7 @@ public:
             for (int i = v.x1; i <= v.x2; ++i)
                 for (int j = v.y1; j <= v.y2; ++j)
                 {
-                    graph->image[width * j + i] = v.type;
+                    graph->image[width * j + i].type = v.type;
                 }
         }
         std::ofstream ofs(filename, std::ios::binary);
@@ -393,7 +402,7 @@ public:
                 unsigned char red = 0;
                 unsigned char green = 0;
                 unsigned char blue = 0;
-                CellType tp = graph->image[i * width + j];
+                CellType tp = graph->image[i * width + j].type;
                 switch (tp) {
                     case UNSCANNED_PATH:
                         red = green = blue = 255;
