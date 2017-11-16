@@ -137,7 +137,7 @@ public:
         fill(minBx, minBy, maxBx, maxBy, PROCESSED);
         fill(minEx, minEy, maxEx, maxEy, PROCESSED);
         vertexList.emplace_back(minBx, minBy, maxBx, maxBy, BEGINNING_POINT);
-        vertexList.emplace_back(minBx, minBy, maxBx, maxBy, ENDING_POINT);
+        vertexList.emplace_back(minEx, minEy, maxEx, maxEy, ENDING_POINT);
         std::vector<Edge> edges;
         auto addEdges = [&edges, imageData, width, height](int min, int max, EdgeGrowDirection direction, int line)
         {
@@ -192,7 +192,7 @@ public:
                     current = i + min + 1;
                 }
             }
-            if (current < max)
+            if (current <= max)
                 edges.emplace_back(current, max, direction, line);
         };
         addEdges(minBx, maxBx, Y_INCREASE, maxBy + 1);
@@ -237,28 +237,45 @@ public:
                 }
                 if (!expanding)
                     break;
-                for (int i = 0; i <= e.maxbound - e.minbound; ++i)
+                auto checkCanContinue = [imageData, &expanding](int index)
                 {
-                    int index;
-                    int xl = x;
-                    int yl = y;
-                    switch (e.grow) {
-                        case X_DECREASE:
-                        case X_INCREASE:
-                            yl += i;
-                            break;
-                        case Y_DECREASE:
-                        case Y_INCREASE:
-                            xl += i;
-                            break;
-                        default:
-                            break;
-                    }
-                    index = width * yl + (xl + i);
                     if (imageData[index] != UNSCANNED_PATH)
                         expanding = false;
-                    else
-                        imageData[index] = PROCESSED;
+                };
+                auto markCheckedDots = [imageData](int index)
+                {
+                    imageData[index] = PROCESSED;
+                };
+                auto iterate = [x, y, &e, width, &expanding](std::function<void(int)> f)
+                {
+                    for (int i = 0; expanding && i <= e.maxbound - e.minbound; ++i)
+                    {
+                        int index;
+                        int xl = x;
+                        int yl = y;
+                        switch (e.grow) {
+                            case X_DECREASE:
+                            case X_INCREASE:
+                                yl += i;
+                                break;
+                            case Y_DECREASE:
+                            case Y_INCREASE:
+                                xl += i;
+                                break;
+                            default:
+                                break;
+                        }
+                        index = width * yl + xl;
+                        f(index);
+                    }
+                };
+                iterate(checkCanContinue);
+                if (expanding)
+                {
+                    iterate(markCheckedDots);
+                }
+                else
+                {
                 }
             }
             addEdges(e.minbound, e.maxbound, e.grow, line);
@@ -275,15 +292,15 @@ public:
             switch (e.grow) {
                 case X_DECREASE:
                 case X_INCREASE:
-                    vertexList.emplace_back(std::min(line, e.line), e.minbound, std::max(line, e.line), e.maxbound, UNSCANNED_PATH);
-                    addEdges(std::min(line, e.line), std::max(line, e.line), Y_INCREASE, e.minbound - 1);
-                    addEdges(std::min(line, e.line), std::max(line, e.line), Y_DECREASE, e.maxbound + 1);
+                    vertexList.emplace_back(std::min(line, e.line), e.minbound, std::max(line, e.line), e.maxbound, ANSWER_PATH);
+                    addEdges(std::min(line, e.line), std::max(line, e.line), Y_INCREASE, e.maxbound + 1);
+                    addEdges(std::min(line, e.line), std::max(line, e.line), Y_DECREASE, e.minbound - 1);
                     break;
                 case Y_DECREASE:
                 case Y_INCREASE:
-                    vertexList.emplace_back(e.minbound, std::min(line, e.line), e.maxbound, std::max(line, e.line), UNSCANNED_PATH);
-                    addEdges(std::min(line, e.line), std::max(line, e.line), X_INCREASE, e.minbound - 1);
-                    addEdges(std::min(line, e.line), std::max(line, e.line), X_DECREASE, e.maxbound + 1);
+                    vertexList.emplace_back(e.minbound, std::min(line, e.line), e.maxbound, std::max(line, e.line), SCANNED_PATH);
+                    addEdges(std::min(line, e.line), std::max(line, e.line), X_INCREASE, e.maxbound + 1);
+                    addEdges(std::min(line, e.line), std::max(line, e.line), X_DECREASE, e.minbound - 1);
                     break;
                 default:
                     break;
@@ -357,6 +374,14 @@ public:
     }
     void write(std::string filename)
     {
+        for (auto v : graph->vertexes)
+        {
+            for (int i = v.x1; i <= v.x2; ++i)
+                for (int j = v.y1; j <= v.y2; ++j)
+                {
+                    graph->image[width * j + i] = v.type;
+                }
+        }
         std::ofstream ofs(filename, std::ios::binary);
         ofs.write(header, headerSize);
         int rowSize = (24 * width + 31) / 32 * 4;
