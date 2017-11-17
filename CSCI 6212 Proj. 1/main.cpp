@@ -12,6 +12,7 @@
 #include <vector>
 #include <chrono>
 #include <algorithm>
+#include <string>
 
 std::string outputFilename = "output.bmp";
 
@@ -418,6 +419,7 @@ public:
         int rowSize = (24 * width + 31) / 32 * 4;
         for (int i = 0; i < height; ++i)
         {
+            int charCounter = 0;
             ofs.seekp(arrayPos + i * rowSize);
             for (int j = 0; j < width; ++j)
             {
@@ -451,6 +453,18 @@ public:
                 ofs.put(blue);
                 ofs.put(green);
                 ofs.put(red);
+                charCounter += 3;
+            }
+            switch(charCounter % 4)
+            {
+                case 1:
+                    ofs.put(0);
+                case 2:
+                    ofs.put(0);
+                case 3:
+                    ofs.put(0);
+                case 0:
+                    break;
             }
         }
     }

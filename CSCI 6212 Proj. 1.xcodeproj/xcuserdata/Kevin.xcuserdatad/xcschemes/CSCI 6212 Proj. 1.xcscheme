@@ -65,7 +65,11 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "unt.bmp"
+            argument = "doge.bmp"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "dogeAnswer.bmp"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
