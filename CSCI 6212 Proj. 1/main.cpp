@@ -13,6 +13,7 @@
 #include <chrono>
 #include <algorithm>
 #include <string>
+#include <cmath>
 
 std::string outputFilename = "output.bmp";
 
@@ -70,14 +71,37 @@ public:
     int minbound;
     int maxbound;
     int line;
+    double point;
     MazeGraphNode* origin;
-    Edge(int min, int max, EdgeGrowDirection dir, int baseline, MazeGraphNode* ori)
+    Edge(int min, int max, EdgeGrowDirection dir, int baseline, MazeGraphNode* ori, std::function<double(int, int)> pnt)
     : minbound(min)
     , maxbound(max)
     , grow(dir)
     , line(baseline)
     , origin(ori)
-    {}
+    {
+        switch (dir) {
+            case X_DECREASE:
+            case X_INCREASE:
+                point = pnt(line, (min + max) / 2);
+                break;
+            case Y_DECREASE:
+            case Y_INCREASE:
+                point = pnt((min + max) / 2, line);
+                break;
+            default:
+                break;
+        }
+    }
+    // This is a dirty trick to build a min heap...
+    bool operator<(const Edge& eg2) const
+    {
+        return point > eg2.point;
+    }
+    bool operator==(const Edge& eg2) const
+    {
+        return point == eg2.point;
+    }
 };
 
 class MazeGraph
@@ -149,8 +173,11 @@ public:
         };
         auto beginVertexNode = addVertex(minBx, minBy, maxBx, maxBy, BEGINNING_POINT);
         addVertex(minEx, minEy, maxEx, maxEy, ENDING_POINT);
+        int Exm = (minEx + maxEx) / 2;
+        int Eym = (minEy + maxEy) / 2;
+        auto calcPnt = [Exm, Eym] (int x, int y) -> double { return pow(pow(Exm - x, 2) + pow(Eym - y, 2), 0.5); };
         std::vector<Edge> edges;
-        auto addEdges = [&edges, imageData, width, height](int min, int max, MazeGraphNode* node,EdgeGrowDirection direction, int line) -> bool
+        auto addEdges = [&edges, &calcPnt, imageData, width, height](int min, int max, MazeGraphNode* node,EdgeGrowDirection direction, int line) -> bool
         {
             // Edge check
             if (min < 0) min = 0;
@@ -198,13 +225,17 @@ public:
                 {
                     if (current != i + min)
                     {
-                        edges.emplace_back(current, min + i - 1, direction, line, node);
+                        edges.emplace_back(current, min + i - 1, direction, line, node, calcPnt);
+                        std::push_heap(edges.begin(), edges.end());
                     }
                     current = i + min + 1;
                 }
             }
             if (current <= max)
-                edges.emplace_back(current, max, direction, line, node);
+            {
+                edges.emplace_back(current, max, direction, line, node, calcPnt);
+                std::push_heap(edges.begin(), edges.end());
+            }
             return false;
         };
         bool isEnd = false;
@@ -217,7 +248,7 @@ public:
             vertexList[1]->directFrom = beginVertexNode;
             return;
         }
-        auto expandEdge = [&addEdges, &addVertex, imageData, width, height, &vertexList](const Edge& e) -> bool
+        auto expandEdge = [&addEdges, &addVertex, &vertexList, imageData, width, height](const Edge& e) -> bool
         {
             int line = e.line;
             bool expanding = true;
@@ -331,7 +362,8 @@ public:
         };
         while (edges.size())
         {
-            auto e = edges.back();
+            auto e = edges.front();
+            std::pop_heap(edges.begin(), edges.end());
             edges.pop_back();
             if (expandEdge(e))
                 break;
