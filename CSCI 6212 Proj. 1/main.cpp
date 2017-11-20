@@ -10,6 +10,7 @@
 #include <fstream>
 #include <utility>
 #include <vector>
+#include <list>
 #include <chrono>
 #include <algorithm>
 #include <string>
@@ -149,7 +150,7 @@ public:
         };
         auto beginVertexNode = addVertex(minBx, minBy, maxBx, maxBy, BEGINNING_POINT);
         addVertex(minEx, minEy, maxEx, maxEy, ENDING_POINT);
-        std::vector<Edge> edges;
+        std::list<Edge> edges;
         auto addEdges = [&edges, imageData, width, height](int min, int max, MazeGraphNode* node,EdgeGrowDirection direction, int line) -> bool
         {
             // Edge check
@@ -331,8 +332,8 @@ public:
         };
         while (edges.size())
         {
-            auto e = edges.back();
-            edges.pop_back();
+            auto e = edges.front();
+            edges.pop_front();
             if (expandEdge(e))
                 break;
         }

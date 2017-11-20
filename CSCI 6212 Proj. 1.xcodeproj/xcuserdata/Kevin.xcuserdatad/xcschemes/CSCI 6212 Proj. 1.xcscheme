@@ -65,11 +65,11 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "doge.bmp"
+            argument = "huge.bmp"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "dogeAnswer.bmp"
+            argument = "hugeAnswer.bmp"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
