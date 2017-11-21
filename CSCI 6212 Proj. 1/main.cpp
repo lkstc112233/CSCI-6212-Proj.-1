@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <string>
 #include <cmath>
+#include <functional>
+#include <climits>
 
 std::string outputFilename = "output.bmp";
 
