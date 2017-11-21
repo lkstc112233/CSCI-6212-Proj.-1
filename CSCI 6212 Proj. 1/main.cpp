@@ -13,6 +13,8 @@
 #include <chrono>
 #include <algorithm>
 #include <string>
+#include <functional>
+#include <climits>
 
 std::string outputFilename = "output.bmp";
 
